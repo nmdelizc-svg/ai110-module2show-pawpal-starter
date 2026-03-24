@@ -27,8 +27,19 @@ My design has four main classes. The Pet class stores the animal's basic informa
 **b. Design changes**
 
 - Did your design change during implementation?
+   Yes
 - If yes, describe at least one change and why you made it.
+   Missing Relationships
 
+      Task → Pet — tasks need to be attached to a pet.
+      Owner → Daily_Plan — owners need a plans list plus get_plan/create_plan methods
+      Daily_Plan → Owner — plans need a back-reference so they aren't orphaned objects
+
+   Logic Bottlenecks
+
+      available_time on both Owner and Daily_Plan → single source of truth on Owner, derived by Daily_Plan
+      get_task_for_date on Daily_Plan → move to Owner as get_plan_for_date, where cross-plan lookup belongs
+      add_task → enforce available_time so adding a task can't silently exceed the owner's availability
 ---
 
 ## 2. Scheduling Logic and Tradeoffs
