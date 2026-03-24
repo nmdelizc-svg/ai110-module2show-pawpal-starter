@@ -27,8 +27,9 @@ My design has four main classes. The Pet class stores the animal's basic informa
 **b. Design changes**
 
 - Did your design change during implementation?
-   Yes
+   Yes, I made changes twice.
 - If yes, describe at least one change and why you made it.
+FIRST CHANGES
    Missing Relationships
 
       Task → Pet — tasks need to be attached to a pet.
@@ -40,6 +41,9 @@ My design has four main classes. The Pet class stores the animal's basic informa
       available_time on both Owner and Daily_Plan → single source of truth on Owner, derived by Daily_Plan
       get_task_for_date on Daily_Plan → move to Owner as get_plan_for_date, where cross-plan lookup belongs
       add_task → enforce available_time so adding a task can't silently exceed the owner's availability
+
+SECOND CHANGES
+   After re-reading the implementation plan i made the redesign shift responsibilities away from Daily_Plan, which was doing too much, and distributes it more naturally across the model. Task is simplified, swapping a vague priority field for a meaningful frequency that actually drives scheduling. Pet now owns its tasks directly, which makes more intuitive sense than tasks floating independently or pointing back at pets. Owner is trimmed down to what it actually represents: a person with pets and availability. All scheduling logic is pulled into a new Scheduler class that acts as the central coordinator. It knows the owner, can see across all pets and tasks, and is the only place where planning decisions get made. Daily_Plan is removed entirely because its responsibilities were split between classes that handle them better. This all makes backend much easier aswell.
 ---
 
 ## 2. Scheduling Logic and Tradeoffs
