@@ -5,7 +5,24 @@
 **a. Initial design**
 
 - Briefly describe your initial UML design.
+My design has four main classes. The Pet class stores the animal's basic information. The Task class represents a single care activity (like a walk or medication) along with its priority and duration. The Daily Plan class ties everything together by organizing tasks for a specific date and tracking which ones have been completed. The Owner class represents the person caring for the pet, managing their list of pets and setting their daily availability.
 - What classes did you include, and what responsibilities did you assign to each?
+ - Owner
+    - responsability - Manages their pets and sets their daily availability.
+    - attributes - name, pets, available_time
+    - methods - add_pet(), remove_pet(), set_availability(), get_pets()
+ - Pet 
+    - responsability - Holds the pets info
+    - attributes - Name, species, age
+    - methods - get_info()
+ - Task 
+    - responsability - Has a single care task and its details
+    - attributes - task_name, duration, priority, is_done
+    - methods - mark_done(), get_duration(), get_priority()
+ - Daily_Plan
+    - responsability - Holds the scheduled tasks for a specific day and tracks what has already been completed.
+    - attributes - date, task_list, completed_tasks, available_time
+    - methods - add_task(), remove_task(), get_completed(), get remaining(), get_task_for_date()
 
 **b. Design changes**
 
