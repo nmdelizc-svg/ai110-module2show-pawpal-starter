@@ -1,5 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
+from datetime import date, timedelta
 from typing import List
 
 
@@ -9,6 +10,8 @@ class Task:
     description: str
     duration: int       # time in minutes
     frequency: str      # e.g. "daily", "weekly"
+    time: str = "00:00"          # scheduled time in HH:MM format
+    due_date: date = None        # date this task is due
     is_done: bool = False
 
     def mark_done(self):
@@ -40,9 +43,13 @@ class Pet:
         """Assign a new care task to this pet."""
         self.tasks.append(task)
 
-    def remove_task(self, task: Task):
-        """Remove a care task from this pet."""
-        self.tasks.remove(task)
+    def remove_task(self, task: Task) -> str:
+        """Remove a care task from this pet. Returns a warning if not found."""
+        try:
+            self.tasks.remove(task)
+            return f"Task '{task.description}' removed."
+        except ValueError:
+            return f"Warning: task '{task.description}' not found in {self.name}'s task list."
 
     def get_tasks(self) -> List[Task]:
         """Return all tasks assigned to this pet."""
@@ -65,9 +72,13 @@ class Owner:
         """Add a pet to this owner's list."""
         self.pets.append(pet)
 
-    def remove_pet(self, pet: Pet):
-        """Remove a pet from this owner's list."""
-        self.pets.remove(pet)
+    def remove_pet(self, pet: Pet) -> str:
+        """Remove a pet from this owner's list. Returns a warning if not found."""
+        try:
+            self.pets.remove(pet)
+            return f"Pet '{pet.name}' removed."
+        except ValueError:
+            return f"Warning: pet '{pet.name}' not found in owner's pet list."
 
     def get_pets(self) -> List[Pet]:
         """Return all pets owned."""
@@ -125,9 +136,60 @@ class Scheduler:
                 total_time += task.duration
         return schedule
 
-    def mark_task_done(self, task: Task):
-        """Mark a specific task as completed."""
+    def mark_task_done(self, task: Task, pet: Pet):
+        """Mark a task complete; if recurring, add a fresh instance to the pet."""
         task.mark_done()
+        if task.is_recurring():
+            base = task.due_date if task.due_date is not None else date.today()
+            if task.frequency == "daily":
+                next_due = base + timedelta(days=1)
+            elif task.frequency == "weekly":
+                next_due = base + timedelta(weeks=1)
+            else:
+                next_due = None
+            next_task = Task(
+                description=task.description,
+                duration=task.duration,
+                frequency=task.frequency,
+                time=task.time,
+                due_date=next_due,
+            )
+            pet.add_task(next_task)
+
+    def sort_by_time(self) -> List[Task]:
+        """Return all tasks sorted by their scheduled time (HH:MM)."""
+        tasks = self.owner.get_all_tasks()
+        tasks.sort(key=lambda task: task.time)
+        return tasks
+
+    def filter_tasks(self, pet_name=None, is_done=None) -> List[Task]:
+        """Return tasks filtered by pet name and/or completion status."""
+        if pet_name is not None:
+            pets = list(filter(lambda pet: pet.name == pet_name, self.owner.get_pets()))
+            tasks = []
+            for pet in pets:
+                tasks.extend(pet.get_tasks())
+        else:
+            tasks = self.owner.get_all_tasks()
+        if is_done is not None:
+            tasks = list(filter(lambda task: task.is_done == is_done, tasks))
+        return tasks
+
+    def get_conflicts(self) -> List[str]:
+        """Return warning messages for tasks scheduled at the same time."""
+        try:
+            all_tasks = self.owner.get_all_tasks()
+            time_groups: dict = {}
+            for task in all_tasks:
+                time_groups.setdefault(task.time, []).append(task)
+            warnings = []
+            for time, group in time_groups.items():
+                if len(group) > 1:
+                    names = ", ".join(t.description for t in group)
+                    warnings.append(f"Warning: conflict at {time} — {names}")
+            return warnings
+        except Exception as e:
+            return [f"Warning: conflict check failed — {e}"]
 
     def get_total_scheduled_time(self) -> int:
         """Return the total duration (minutes) of all pending tasks."""

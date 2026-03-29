@@ -41,3 +41,9 @@ pip install -r requirements.txt
 5. Add tests to verify key behaviors.
 6. Connect your logic to the Streamlit UI in `app.py`.
 7. Refine UML so it matches what you actually built.
+
+
+### Smarter Scheduling
+PawPal+ received a full data model and scheduling engine built around three core classes. The Pet class now stores a list of care tasks and exposes methods to add, remove, and filter them by completion status. The Owner class tracks daily available time in minutes and aggregates tasks across all owned pets. The Task class captures each care activity with a description, duration, scheduled time, frequency, and due date, and supports recurring task logic so completing a daily or weekly task automatically queues the next occurrence.
+
+The Scheduler class serves as the central brain of the app. It implements a greedy daily schedule builder that sorts pending tasks by shortest duration first and fills the owner's time budget without going over. Additional methods let you sort all tasks by their scheduled time slot, filter tasks by pet or completion status, and detect conflicts when two tasks share the same time slot. A demo script in main.py exercises all of these features and prints formatted output showing today's schedule, time-sorted tasks, per-pet filters, pending tasks, and any scheduling conflicts detected.

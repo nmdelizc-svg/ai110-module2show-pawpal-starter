@@ -51,12 +51,19 @@ SECOND CHANGES
 **a. Constraints and priorities**
 
 - What constraints does your scheduler consider (for example: time, priority, preferences)?
+Time (owner availability) - build_daily_schedule checks the owner's available time and only includes tasks whose cumulative duration fits within that range.
+Duration - Each task has a duration, and the scheduler uses it to decide what fits.
+Completion status - Only pending tasks are considered for the daily schedule via get_pending_tasks().
 - How did you decide which constraints mattered most?
+Owner available time was treated as the most important thing. If a task does not fit within the owner's day, it simply cannot happen regardless of importance (this will be modified to handle priorities). Completion status was a natural second constraint since scheduling a done task is meaningless. Duration was used as the sorting key so the most tasks possible fit within the available time.
 
 **b. Tradeoffs**
 
 - Describe one tradeoff your scheduler makes.
+build_daily_schedule sorts tasks by shortest duration first. This means a long but critical task could be skipped if shorter tasks fill up the owner's available time
 - Why is that tradeoff reasonable for this scenario?
+Why is that tradeoff reasonable for this scenario?
+For everyday pet care, most tasks are short and recurring, so fitting the most tasks in a day is generally the right goal. The app does not yet have a priority/urgency field on tasks, so duration is the best available proxy.
 
 ---
 
