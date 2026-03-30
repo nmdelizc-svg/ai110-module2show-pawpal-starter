@@ -48,10 +48,10 @@ PawPal+ received a full data model and scheduling engine built around three core
 
 The Scheduler class serves as the central brain of the app. It implements a greedy daily schedule builder that sorts pending tasks by shortest duration first and fills the owner's time budget without going over. Additional methods let you sort all tasks by their scheduled time slot, filter tasks by pet or completion status, and detect conflicts when two tasks share the same time slot. A demo script in main.py exercises all of these features and prints formatted output showing today's schedule, time-sorted tasks, per-pet filters, pending tasks, and any scheduling conflicts detected.
 
-### Testing PawPal+
- # Command to run tests:
+## Testing PawPal+
+ ### Command to run tests:
  python -m pytest
- # Description of tests created
+ ### Description of tests created:
  test_mark_done_changes_status - This confirms a task starts as not done and flips it to done after calling mark_done().
  test_add_task_increases_pet_task_count - Makes sure each call to add_task() actually appends to the pet's task list and they aren't dropped or duplicated.
  test_build_daily_schedule_respects_available_time - Checks that the scheduler never schedules more minutes than the owner has available.
@@ -59,5 +59,22 @@ The Scheduler class serves as the central brain of the app. It implements a gree
  test_mark_task_done_daily_creates_next_day_task - Marks a daily task complete and asserts a new identical task is created with a due date exactly one day later.
  test_get_conflicts_flags_duplicate_times - Schedules two tasks at the same time and one at a different time, then confirms exactly one conflict warning is returned naming both overlapping tasks. 
  test_hardest_combined_edge_cases - A full stress test: one pet with no tasks, one pet with a time conflict, an overflow task, and a past-due recurring task 
- # Confidence Level
+ ### Confidence Level
   ☆ ☆ ☆ ☆ ☆
+
+## Features
+
+- **Greedy daily schedule builder**  *Scheduler.build_daily_schedule()* - sorts all pending tasks by shortest duration first, then greedily fills the owner's available time budget without going over. Tasks that don't fit are listed as unscheduled in the UI.
+- **Sorting by scheduled time**  
+*Scheduler.sort_by_time()* - returns every task across all pets ordered chronologically by their HH:MM time string, used in both the Task Overview and the generated schedule display.
+- **Filtering by pet or completion status** *Scheduler.filter_tasks(pet_name, is_done)* -  lets the UI show only the tasks belonging to a chosen pet and/or only pending/completed tasks; a separate frequency filter (daily / weekly / once) is applied on top in app.py.
+- **Conflict detection**  
+*Scheduler.get_conflicts()* - groups all tasks by their time slot; any slot with more than one task produces a warning message naming each conflicting task, shown as red alerts in the UI.
+- **Time-budget advisory**  
+ app.py compares total pending duration against owner.available_time: a soft warning fires when over budget, and a hard error fires when pending time exceeds 1.5× the budget.
+- **Daily recurrence**  
+*Scheduler.mark_task_done()* - marks the current task complete and, for daily or weekly tasks, automatically creates a new identical Task with a due_date incremented by one day or one week and appends it to the pet's task list.
+- **Inline task editing**  
+ The Task Overview renders an edit form directly beneath any row whose ✏️ button is clicked, allowing the description, duration, frequency, and scheduled time to be updated without leaving the page.
+- **12 h ↔ 24 h time conversion**  
+ *to_24h()* - converts the UI's 12-hour hour/minute/AM-PM pickers to a zero-padded HH:MM string for storage; *fmt_time()* - converts it back to a readable 12:30 PM string for display.

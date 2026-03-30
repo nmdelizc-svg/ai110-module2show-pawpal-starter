@@ -1,0 +1,13 @@
+[theme]
+
+# Main accent color — used automatically for buttons, checkboxes, focus rings, sliders, etc.
+primaryColor = "#ff6eb4"
+
+# Page background
+backgroundColor = "#0b0b2a"
+
+# Background for widgets, sidebar, and input fields
+secondaryBackgroundColor = "#130a2e"
+
+# All regular text
+textColor = "#c8d8f0"

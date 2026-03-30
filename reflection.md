@@ -62,7 +62,6 @@ Owner available time was treated as the most important thing. If a task does not
 - Describe one tradeoff your scheduler makes.
 build_daily_schedule sorts tasks by shortest duration first. This means a long but critical task could be skipped if shorter tasks fill up the owner's available time
 - Why is that tradeoff reasonable for this scenario?
-Why is that tradeoff reasonable for this scenario?
 For everyday pet care, most tasks are short and recurring, so fitting the most tasks in a day is generally the right goal. The app does not yet have a priority/urgency field on tasks, so duration is the best available proxy.
 
 ---
@@ -72,13 +71,16 @@ For everyday pet care, most tasks are short and recurring, so fitting the most t
 **a. How you used AI**
 
 - How did you use AI tools during this project (for example: design brainstorming, debugging, refactoring)?
+I used AI at multiple stages of the project. Early on, I used them for brainstorming to help shape the core idea. Once I had a solid design for each class, I used AI to help implement the logic I had already planned out. Toward the end, I leaned on it for generating tests and debugging issues that came up along the way.
 - What kinds of prompts or questions were most helpful?
+Two approaches stood out. First, asking the AI to explain my code line by line was especially useful because it helped surface gaps in my logic that I might have otherwise missed. Second, I found that framing questions with my own answer, even if I suspected it was wrong, led to more genuine responses. When I just ask an open question, AI tools can sometimes give a vague answer to seem agreeable. But when I commit to a position, it responds more critically and directly, which is far more useful.
 
 **b. Judgment and verification**
 
 - Describe one moment where you did not accept an AI suggestion as-is.
+When working on the mark_task_done method in pawpal_system.py, the AI suggested two refactors: replacing the if/elif/else block with a module-level dictionary mapping frequency strings to timedelta values, and shortening a None check to use or shorthand. I pushed back on both suggestions and ultimately kept the original code unchanged.
 - How did you evaluate or verify what the AI suggested?
-
+I considered whether the changes actually improved anything given the project's current scope. The dictionary approach would only make sense if the number of frequencies were likely to grow, but the project only has two and there are no plans to expand it. As for the or shorthand, while it is more concise, the explicit None check reads more clearly and avoids any ambiguity. I raised these concerns directly with the AI, and it agreed that the refactor was not justified. 
 ---
 
 ## 4. Testing and Verification
@@ -86,12 +88,16 @@ For everyday pet care, most tasks are short and recurring, so fitting the most t
 **a. What you tested**
 
 - What behaviors did you test?
+I tested seven behaviors: marking a task as done, adding tasks to a pet, building a daily schedule within available time, sorting tasks by scheduled time, creating the next recurring task after completion, detecting time conflicts between tasks, and filtering tasks by pet name with no tasks present.
 - Why were these tests important?
+These tests matter because the scheduler's core promise can break silently. Without tests, a bug like counting completed tasks in the total time, or miscalculating a recurring task's next due date by one day, would only surface when a real user's pet misses a feeding.
 
 **b. Confidence**
 
 - How confident are you that your scheduler works correctly?
+Im very confident that it works just right.
 - What edge cases would you test next if you had more time?
+If I had more time, I would dig deeper into mark_task_done and remove_task. Both methods felt slightly off to me during development but I never got the chance to fully investigate. There is something about how they handle unexpected inputs that I am not entirely confident in, and I suspect edge cases could slip through without any obvious indication that something went wrong.
 
 ---
 
@@ -100,11 +106,12 @@ For everyday pet care, most tasks are short and recurring, so fitting the most t
 **a. What went well**
 
 - What part of this project are you most satisfied with?
+Im satisfied with the overall outcome of the project.
 
 **b. What you would improve**
-
-- If you had another iteration, what would you improve or redesign?
+I would replace name-based lookups with unique IDs to make the system more reliable as the data grows.
 
 **c. Key takeaway**
 
 - What is one important thing you learned about designing systems or working with AI on this project?
+I learned that both AI and system design reward critical thinking over passive acceptance. Questioning an AI suggestion, or an edge case in your own code, leads to much better outcomes than just going with the first answer that seems to work.
