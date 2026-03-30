@@ -4,6 +4,8 @@ from datetime import date, timedelta
 from typing import List
 
 
+PRIORITY_ORDER = {"High": 0, "Medium": 1, "Low": 2}
+
 @dataclass
 class Task:
     """A single care activity for a pet."""
@@ -13,6 +15,7 @@ class Task:
     time: str = "00:00"          # scheduled time in HH:MM format
     due_date: date = None        # date this task is due
     is_done: bool = False
+    priority: str = "Medium"     # "High", "Medium", or "Low"
 
     def mark_done(self):
         """Mark this task as completed."""
@@ -124,10 +127,10 @@ class Scheduler:
     def build_daily_schedule(self) -> List[Task]:
         """
         Return an ordered list of tasks that fit within the owner's
-        available time, prioritizing pending tasks by duration.
+        available time, sorted by priority (High first) then by scheduled time.
         """
         pending = self.get_pending_tasks()
-        pending.sort(key=lambda task: task.duration)
+        pending.sort(key=lambda task: (PRIORITY_ORDER.get(task.priority, 1), task.time))
         schedule = []
         total_time = 0
         for task in pending:
@@ -153,6 +156,7 @@ class Scheduler:
                 frequency=task.frequency,
                 time=task.time,
                 due_date=next_due,
+                priority=task.priority,
             )
             pet.add_task(next_task)
 

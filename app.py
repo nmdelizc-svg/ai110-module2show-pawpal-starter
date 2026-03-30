@@ -21,6 +21,8 @@ def to_24h(hour: int, minute: int, period: str) -> str:
         h24 = 12 if hour == 12 else hour + 12
     return f"{h24:02d}:{minute:02d}"
 
+PRIORITY_EMOJI = {"High": "🔴 High", "Medium": "🟡 Medium", "Low": "🟢 Low"}
+
 st.set_page_config(page_title="PawPal+", page_icon="🐾", layout="centered")
 
 # ── Theme: space + pink/blue ──────────────────────────────────────────────────
@@ -166,13 +168,15 @@ if st.session_state.pets:
     )
     selected_pet = st.session_state.pets[selected_index]
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     with col1:
         task_title = st.text_input("Task title", value="Morning walk")
     with col2:
         duration = st.number_input("Duration (min)", min_value=1, max_value=240, value=20)
     with col3:
         frequency = st.selectbox("Frequency", ["daily", "weekly", "once"])
+    with col4:
+        priority = st.selectbox("Priority", ["High", "Medium", "Low"], index=1)
 
     tc1, tc2, tc3 = st.columns(3)
     with tc1:
@@ -189,6 +193,7 @@ if st.session_state.pets:
             duration=int(duration),
             frequency=frequency,
             time=task_time,
+            priority=priority,
         )
         selected_pet.add_task(new_task)
         st.session_state.scheduler = None
@@ -206,7 +211,7 @@ if st.session_state.pets:
     st.session_state.owner.pets = st.session_state.pets
 
     # ── Filter & sort controls ────────────────────────────────────────────────
-    fc1, fc2, fc3 = st.columns(3)
+    fc1, fc2, fc3, fc4 = st.columns(4)
     with fc1:
         filter_pet_opts = ["All pets"] + [p.name for p in st.session_state.pets]
         filter_pet = st.selectbox("Filter by pet", filter_pet_opts, key="filter_pet")
@@ -215,8 +220,12 @@ if st.session_state.pets:
             "Filter by frequency", ["All", "daily", "weekly", "once"], key="filter_freq"
         )
     with fc3:
+        filter_priority = st.selectbox(
+            "Filter by priority", ["All", "High", "Medium", "Low"], key="filter_priority"
+        )
+    with fc4:
         sort_mode = st.selectbox(
-            "Sort by", ["Added order", "Scheduled time", "Duration"], key="sort_mode"
+            "Sort by", ["Added order", "Scheduled time", "Duration", "Priority"], key="sort_mode"
         )
 
     # Resolve pet name filter
@@ -229,7 +238,11 @@ if st.session_state.pets:
     if filter_freq != "All":
         filtered = [t for t in filtered if t.frequency == filter_freq]
 
-    # Apply sort via Scheduler.sort_by_time() or plain duration sort
+    # Apply priority filter
+    if filter_priority != "All":
+        filtered = [t for t in filtered if t.priority == filter_priority]
+
+    # Apply sort via Scheduler.sort_by_time() or plain duration/priority sort
     if sort_mode == "Scheduled time":
         sorted_all = view_scheduler.sort_by_time()
         # Keep only tasks that survived the filter
@@ -237,6 +250,9 @@ if st.session_state.pets:
         filtered = [t for t in sorted_all if id(t) in filtered_set]
     elif sort_mode == "Duration":
         filtered = sorted(filtered, key=lambda t: t.duration)
+    elif sort_mode == "Priority":
+        from pawpal_system import PRIORITY_ORDER
+        filtered = sorted(filtered, key=lambda t: (PRIORITY_ORDER.get(t.priority, 1), t.time))
 
     # Build stable key lookup: id(task) → (pet_idx, task_idx) for checkbox keys
     # Also build pet-name lookup for display
@@ -252,20 +268,21 @@ if st.session_state.pets:
 
     if filtered:
         # Header row
-        hc = st.columns([2, 3, 1.5, 1.2, 1.5, 1, 1])
-        for col, label in zip(hc, ["Pet", "Task", "Time", "Duration", "Frequency", "Done", "Edit"]):
+        hc = st.columns([1.8, 2.5, 1.5, 1.5, 1.2, 1.5, 1, 1])
+        for col, label in zip(hc, ["Pet", "Task", "Priority", "Time", "Duration", "Frequency", "Done", "Edit"]):
             col.markdown(f"**{label}**")
         st.divider()
 
         for t in filtered:
             pi, ti = task_key.get(id(t), (-1, -1))
-            rc = st.columns([2, 3, 1.5, 1.2, 1.5, 1, 1])
+            rc = st.columns([1.8, 2.5, 1.5, 1.5, 1.2, 1.5, 1, 1])
             rc[0].write(pet_of.get(id(t), "—"))
             rc[1].write(t.description)
-            rc[2].write(fmt_time(t.time))
-            rc[3].write(f"{t.duration} min")
-            rc[4].write(t.frequency)
-            checked = rc[5].checkbox(
+            rc[2].write(PRIORITY_EMOJI.get(t.priority, t.priority))
+            rc[3].write(fmt_time(t.time))
+            rc[4].write(f"{t.duration} min")
+            rc[5].write(t.frequency)
+            checked = rc[6].checkbox(
                 "done",
                 value=t.is_done,
                 key=f"done_{pi}_{ti}",
@@ -274,7 +291,7 @@ if st.session_state.pets:
             if checked and not t.is_done:
                 t.mark_done()
                 st.rerun()
-            if rc[6].button("✏️", key=f"edit_{pi}_{ti}", help="Edit this task"):
+            if rc[7].button("✏️", key=f"edit_{pi}_{ti}", help="Edit this task"):
                 st.session_state.editing_task = (pi, ti)
                 st.rerun()
 
@@ -282,11 +299,14 @@ if st.session_state.pets:
             if st.session_state.editing_task == (pi, ti):
                 with st.form(key=f"edit_form_{pi}_{ti}"):
                     st.markdown(f"**Editing:** {t.description}")
-                    ec1, ec2, ec3 = st.columns(3)
+                    ec1, ec2, ec3, ec4 = st.columns(4)
                     new_desc = ec1.text_input("Task title", value=t.description)
                     new_dur  = ec2.number_input("Duration (min)", min_value=1, max_value=240, value=t.duration)
                     new_freq = ec3.selectbox("Frequency", ["daily", "weekly", "once"],
                                              index=["daily", "weekly", "once"].index(t.frequency))
+                    cur_priority = t.priority if t.priority in ["High", "Medium", "Low"] else "Medium"
+                    new_priority = ec4.selectbox("Priority", ["High", "Medium", "Low"],
+                                                 index=["High", "Medium", "Low"].index(cur_priority))
                     tc1, tc2, tc3 = st.columns(3)
                     # Parse current stored 24h time back to 12h for the pickers
                     try:
@@ -312,6 +332,7 @@ if st.session_state.pets:
                     t.duration    = int(new_dur)
                     t.frequency   = new_freq
                     t.time        = to_24h(new_hour, new_minute, new_period)
+                    t.priority    = new_priority
                     st.session_state.editing_task = None
                     st.session_state.scheduler = None
                     st.success(f"Task updated to **{new_desc}** at {fmt_time(t.time)}.")
@@ -391,6 +412,7 @@ if st.session_state.scheduler:
                 "Time": fmt_time(t.time),
                 "Pet": pet_of_sched.get(id(t), "—"),
                 "Task": t.description,
+                "Priority": PRIORITY_EMOJI.get(t.priority, t.priority),
                 "Duration (min)": t.duration,
                 "Frequency": t.frequency,
             }
